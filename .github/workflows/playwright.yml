@@ -1,0 +1,93 @@
+name: 'Playwright Tests'
+
+on:
+  push:
+    branches: [master]
+
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Set any tags like: "@smoke" , "@222333", "@fast|@slow"'
+        required: false
+        default: ''
+      trace:
+        type: choice
+        description: 'Choose trace option: on / off / retain-on-failure'
+        required: false
+        default: 'off'
+        options:
+          - 'retain-on-failure'
+          - 'on'
+          - 'off'
+
+  # schedule:
+  #   - cron: '0 1 * * 1-5' # every weekday at 1:00 AM
+
+jobs:
+  Run_ui_tests:
+    timeout-minutes: 60
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      issues: read
+      checks: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 22
+
+      - name: Install dependencies and browsers
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Run Playwright Tests
+        env:
+          TRACE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.trace || 'off' }}
+          TAGS:  ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tags  || '' }}
+          BASE_URL: ${{ secrets.BASE_URL }}
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+        run: npx playwright test --trace "$TRACE" --grep "$TAGS"
+
+      - name: Upload playwright report artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-ui
+          path: playwright-report-ui
+          retention-days: 10
+
+      - name: Upload monocart report artifacts
+        uses: actions/upload-artifact@v4
+        id: upload_monocart_artifact
+        if: always()
+        with:
+          name: monocart-report-ui
+          path: monocart-report-ui
+          retention-days: 10
+
+      - name: Wait for Artifacts to be ready
+        if: always()
+        run: |
+          sleep 10
+          ls junit-report-ui/ -la
+
+      # publish unit test results
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: |
+            junit-report-ui/*.xml
+            junit-report-ui/*.json
+
+      - name: Deploy to pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.ACCESS_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./monocart-report-ui

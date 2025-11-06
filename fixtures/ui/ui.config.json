@@ -1,0 +1,11 @@
+{
+  "dev": {
+    "baseUrl": "https://dev-repmove-enterprise.web.app",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "actionTimeout": 10000,
+    "navigationTimeout": 15000
+  }
+}

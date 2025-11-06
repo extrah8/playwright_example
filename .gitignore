@@ -1,0 +1,12 @@
+# Playwright
+node_modules/
+monocart-report-ui/
+playwright-report-ui/
+junit-report-ui/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+.env
+playwright-report
+test-results
