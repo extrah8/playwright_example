@@ -394,13 +394,3 @@ Custom locators for Angular components:
 5. Export from main fixture file
 
 ---
-
-## Contact & Support
-
-For questions or issues related to this test automation framework, please contact the QA team.
-
----
-
-## License
-
-This project is private and proprietary to RepMove.
